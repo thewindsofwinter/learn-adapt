@@ -116,16 +116,27 @@ export const UserVideoPane = () => {
   };
 
   return (
-    <div className="w-full h-full">
-      {microphonePermissionGranted && cameraPermissionGranted ? (
-        <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted />
-      ) : (
-        <div className="flex items-center justify-center w-full h-full bg-jetBlack-500">
-          <p className="text-platinum-500 text-2xl">
-            This app requires microphone and camera access to rate your teaching. Please grant access.
-          </p>
+    <div className="flex flex-row w-screen h-screen bg-jetBlack-500">
+      <div className="relative w-3/4 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">  
+        <div className="absolute inset-0 m-1 rounded-md">
+          {microphonePermissionGranted && cameraPermissionGranted ? (
+            <video ref={videoRef} className="w-full h-full object-cover rounded-md" autoPlay muted />
+          ) : (
+            <div className="flex items-center justify-center w-full h-full bg-jetBlack-500">
+              <p className="text-platinum-500 text-2xl rounded-md">
+                This app requires microphone and camera access to rate your teaching. Please grant access.
+              </p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
+      <div className="relative w-1/4 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
+        {/* Feedback Pane */}
+        {/* Replace this placeholder with the FeedbackDisplay component */}
+        <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md">
+          {/* Content of the sub-component */}
+        </div>
+      </div>
     </div>
   );
 };
