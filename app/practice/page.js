@@ -1,4 +1,7 @@
+"use client";
+
 import React from 'react';
+import { UserVideoPane } from '../components/UserVideoPane';
 
 const PracticePage = () => {
     return (
@@ -7,7 +10,7 @@ const PracticePage = () => {
           {/* User Video Pane */}
           {/* Replace this placeholder with the UserVideoStream component */}
           <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md">
-            {/* Content of the sub-component */}
+            <UserVideoPane />
           </div>
         </div>
         <div className="relative w-1/4 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
