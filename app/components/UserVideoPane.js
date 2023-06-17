@@ -1,15 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import dotenv from 'dotenv';
+import { ImageCapture } from 'image-capture';
+import { Buffer } from 'buffer';
 
 dotenv.config(); // Load environment variables from .env file
 
-
-export const UserVideoPane = () => {
+const UserVideoPane = () => {
+  const [feedback, setFeedback] = useState("");
   const videoRef = useRef(null);
   const [mediaStream, setMediaStream] = useState(null);
   const [microphonePermissionGranted, setMicrophonePermissionGranted] = useState(false);
   const [cameraPermissionGranted, setCameraPermissionGranted] = useState(false);
   const [socket, setSocket] = useState(null);
+  const [framesSent, setFramesSent] = useState(0);
+
+
 
   const getUserMedia = async () => {
     try {
@@ -31,6 +36,86 @@ export const UserVideoPane = () => {
       setCameraPermissionGranted(false);
     }
   };
+
+  const convertBlobToBase64 = (blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+  
+      reader.onloadend = () => {
+        const base64Data = reader.result.split(',')[1];
+        resolve(base64Data);
+      };
+  
+      reader.onerror = reject;
+  
+      reader.readAsDataURL(blob);
+    });
+  };
+  
+  useEffect(() => {
+    console.log(framesSent);
+    const sendVideoData = async (videoImageCapture) => {
+      try {
+        const videoFrameBlob = await videoImageCapture.grabFrame();
+        console.log(videoFrameBlob);
+
+        // From StackOverflow
+        const canvas = document.getElementById('hidden-draw');
+        // resize it to the size of our ImageBitmap
+        canvas.width = videoFrameBlob.width;
+        canvas.height = videoFrameBlob.height;
+        // get a bitmaprenderer context
+        const ctx = canvas.getContext('bitmaprenderer');
+        ctx.transferFromImageBitmap(videoFrameBlob);
+        // get it back as a Blob
+        const blob2 = await new Promise((res) => canvas.toBlob(res));
+        console.log(blob2);
+      
+        const base64EncodedVideo = await convertBlobToBase64(blob2);
+    
+        // console.log(base64EncodedVideo);
+    
+        if (socket) {
+          const jsonMessage = {
+            models: {
+              face: {
+                facs: {},
+                descriptions: {},
+                identify_faces: false,
+              },
+            },
+            stream_window_ms: 5000,
+            reset_stream: false,
+            raw_text: false,
+            job_details: false,
+            payload_id: 'string',
+            data: base64EncodedVideo,
+          };
+          // console.log(JSON.stringify(jsonMessage));
+          socket.send(JSON.stringify(jsonMessage));
+        }    
+      } catch (error) {
+        console.error('Error capturing video frame:', error);
+      }
+    };
+
+    if (socket && mediaStream && typeof window !== 'undefined') {
+      const videoTrack = mediaStream.getVideoTracks()[0];
+      let videoImageCapture = new ImageCapture(videoTrack);
+
+      sendVideoData(videoImageCapture);
+    } else {
+      console.log('undefined');
+    }
+  }, [socket, mediaStream, framesSent])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFramesSent(prevFramesSent => prevFramesSent + 1);
+    }, 10000);
+  
+    return () => clearInterval(interval);
+  }, []);  
 
   useEffect(() => {
     const checkExistingPermissions = async () => {
@@ -75,7 +160,8 @@ export const UserVideoPane = () => {
       };
     
       newSocket.onclose = () => {
-        console.log('WebSocket connection closed');
+        console.log('WebSocket connection closed -- attempting re-open');
+        createWebSocketConnection();
         // Perform any necessary cleanup or reconnection logic
       };
     
@@ -96,23 +182,19 @@ export const UserVideoPane = () => {
     };
   }, []);
 
-  const encodeAudioData = (audioData) => {
-    // Implement the audio data encoding logic here
-    // Return the base64 encoded audio data
+  const encodeVideoData = (videoData) => {
+    const dataBuffer = Buffer.from(videoData);
+    const base64EncodedVideo = dataBuffer.toString('base64');
+    return base64EncodedVideo;  
   };
 
   const handleWebSocketMessage = (message) => {
     if (socket) {
-      const base64EncodedAudio = encodeAudioData(message.audio);
-      const jsonMessage = {
-        models: {
-          language: {},
-        },
-        raw_text: false,
-        data: base64EncodedAudio,
-      };
-      socket.send(JSON.stringify(jsonMessage));
-    }
+      // Process the received message, extract feedback from it
+      console.log(message);
+      const receivedFeedback = message;
+      setFeedback(receivedFeedback);
+    }  
   };
 
   return (
@@ -133,10 +215,14 @@ export const UserVideoPane = () => {
       <div className="relative w-1/4 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
         {/* Feedback Pane */}
         {/* Replace this placeholder with the FeedbackDisplay component */}
-        <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md">
-          {/* Content of the sub-component */}
+        <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500">
+          <p className="p-8">Feedback: {feedback}</p>
         </div>
       </div>
+      
+      <canvas id="hidden-draw" className="absolute inset-0 m-1 bg-transparent" style={{ zIndex: '-1', visibility: 'hidden' }}></canvas>
     </div>
   );
 };
+
+export default UserVideoPane;
