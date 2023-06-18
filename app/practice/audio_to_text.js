@@ -79,4 +79,29 @@ app.post("/questions", async (req, res) => {
   }
 });
 
+app.post("/summarize", async (req, res) => {
+  const prompt = "Please summarize the text below in 3 sentences or less:  " + req.body.text;
+  try{
+    const responses = await openai.createChatCompletion({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.2,
+    });
+  
+  console.log(responses);
+  return res.status(200).json({
+    success: true,
+    message: responses.data.choices[0],
+  });
+} catch (error) {
+    console.log(error.message);
+
+    res.send({success: false,
+    message: error
+  });
+}
+});
+
 module.exports = router;
