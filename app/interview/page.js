@@ -14,7 +14,7 @@ const InterviewPage = () => {
   useEffect(() => {
     const url = new URL(window.location.href);
     const searchParams = new URLSearchParams(url.search);
-    const task = searchParams.get('task');
+    let task = searchParams.get('task');
 
     // console.log('task:', task);
     
