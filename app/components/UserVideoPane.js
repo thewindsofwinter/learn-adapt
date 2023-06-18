@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import dotenv from 'dotenv';
 import { ImageCapture } from 'image-capture';
 import { Buffer } from 'buffer';
+import { TopEmotions } from './TopEmotions'
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -13,8 +14,7 @@ const UserVideoPane = () => {
   const [cameraPermissionGranted, setCameraPermissionGranted] = useState(false);
   const [socket, setSocket] = useState(null);
   const [framesSent, setFramesSent] = useState(0);
-
-
+  const [emotionsData, setEmotionsData] = useState(null);
 
   const getUserMedia = async () => {
     try {
@@ -57,7 +57,7 @@ const UserVideoPane = () => {
     const sendVideoData = async (videoImageCapture) => {
       try {
         const videoFrameBlob = await videoImageCapture.grabFrame();
-        console.log(videoFrameBlob);
+        // console.log(videoFrameBlob);
 
         // From StackOverflow
         const canvas = document.getElementById('hidden-draw');
@@ -69,7 +69,7 @@ const UserVideoPane = () => {
         ctx.transferFromImageBitmap(videoFrameBlob);
         // get it back as a Blob
         const blob2 = await new Promise((res) => canvas.toBlob(res));
-        console.log(blob2);
+        // console.log(blob2);
       
         const base64EncodedVideo = await convertBlobToBase64(blob2);
     
@@ -99,7 +99,11 @@ const UserVideoPane = () => {
       }
     };
 
-    if (socket && mediaStream && typeof window !== 'undefined') {
+    if(socket) {
+      console.log(socket.readyState)
+    }
+
+    if (socket && socket.readyState === WebSocket.OPEN && mediaStream && typeof window !== 'undefined') {
       const videoTrack = mediaStream.getVideoTracks()[0];
       let videoImageCapture = new ImageCapture(videoTrack);
 
@@ -112,7 +116,7 @@ const UserVideoPane = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setFramesSent(prevFramesSent => prevFramesSent + 1);
-    }, 10000);
+    }, 1000);
   
     return () => clearInterval(interval);
   }, []);  
@@ -157,6 +161,8 @@ const UserVideoPane = () => {
         const message = JSON.parse(event.data);
         console.log('Received message:', message);
         // Process and display the received data
+
+        handleWebSocketMessage(message);
       };
     
       newSocket.onclose = () => {
@@ -189,12 +195,13 @@ const UserVideoPane = () => {
   };
 
   const handleWebSocketMessage = (message) => {
-    if (socket) {
-      // Process the received message, extract feedback from it
-      console.log(message);
+    // Process the received message, extract feedback from it
+    if(message["face"]["predictions"].length > 0) {
+      console.log(message["face"]["predictions"][0]["emotions"]);
       const receivedFeedback = message;
+      setEmotionsData(message["face"]["predictions"][0]["emotions"])
       setFeedback(receivedFeedback);
-    }  
+    }
   };
 
   return (
@@ -216,7 +223,10 @@ const UserVideoPane = () => {
         {/* Feedback Pane */}
         {/* Replace this placeholder with the FeedbackDisplay component */}
         <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500">
-          <p className="p-8">Feedback: {feedback}</p>
+          <div className="p-8">
+            <h2 className="text-2xl font-bold text-platinum-500 mb-4">Live Evaluation (Hume AI)</h2>
+            {emotionsData ? <TopEmotions emotions={emotionsData} className="top-emotions-panel" /> : "Loading..."}
+          </div>
         </div>
       </div>
       
