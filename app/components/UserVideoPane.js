@@ -82,7 +82,9 @@ const UserVideoPane = ({ task }) => {
       }
 
       // Define the system prompt and user speech
-      const systemPrompt = "You are a student. A teacher has been tasked with the following: " + task + ". You should ask questions and act confused. Previous conversation: " + prePrompt;
+      const systemPrompt = "You're a good friend of the user, getting him ready for a date. This is his goal: " + task 
+        + ". You think the user is not charismatic, so you're trying to be as awkward with him as possible to get him" + 
+        + " ready for the real date. Previous conversation: " + prePrompt;
       console.log(systemPrompt);
       const userSpeech = concatenatedTranscriptions;
 
