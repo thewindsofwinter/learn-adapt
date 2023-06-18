@@ -1,3 +1,7 @@
+"use client";
+
+import Image from 'next/image'
+import React, { useState } from 'react';
 import Link from 'next/link';
 import styles from "./style";
 import Navbar from "./components/Navbar";
@@ -9,10 +13,9 @@ import Teaching from "./components/Teaching";
 import Pitch from "./components/Pitch";
 import Testimony from "./components/Testimony";
 
-
-
-
 export default function Home() {
+  const [inputValue, setInputValue] = useState('Help a student understand AI double descent.');
+
   return (
     <div className="bg-primary w-full overflow-hidden">
     <div className={`${styles.paddingX} ${styles.flexCenter}`}>

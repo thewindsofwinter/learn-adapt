@@ -8,8 +8,7 @@ const DynamicVideoPane = dynamic(() => import('../components/UserVideoPane').the
   ssr: false, // Disable server-side rendering for this component
 });
 
-const PracticePage = () => {
-  const [isComponentLoaded, setIsComponentLoaded] = useState(false);
+const InterviewPage = () => {
   const taskRef = useRef("");
 
   useEffect(() => {
@@ -20,14 +19,17 @@ const PracticePage = () => {
     // console.log('task:', task);
     
     if (task == null || task === "") {
-      taskRef.current = "Describe the theoretical foundations of double descent and its importance in machine learning.";
+      taskRef.current = "Explain how to efficiently merge k sorted linked lists.";
     } else {
       taskRef.current = task;
     }
   }, []);
 
-  const taskPrefix = "You are a student. A teacher has been tasked with the following: ";
-  const taskSuffix = ". You should ask questions and act confused. Previous conversation: ";
+  const [isComponentLoaded, setIsComponentLoaded] = useState(false);
+
+  const taskPrefix = "You are a technical lead in an interview, where the coding question is: ";
+  const taskSuffix = ". You should delve deep into technical details of their solution, and give constraints when asked. Your goal is to evaluate"
+    + " whether hiring them would be beneficial to the company.";
 
   useEffect(() => {
     setIsComponentLoaded(true);
@@ -38,11 +40,11 @@ const PracticePage = () => {
       {isComponentLoaded && 
       <div className="w-screen h-full bg-gradient-to-b from-jetBlack-400 to-jetBlack-600">
         <h1 className="text-center text-platinum-500 text-3xl font-bold p-4 pt-16">Task: {taskRef.current}</h1>
-        <DynamicVideoPane taskPrefix={taskPrefix} task={taskRef.current} taskSuffix={taskSuffix} />
+        <DynamicVideoPane taskPrefix={taskPrefix} task={taskRef.current} taskSuffix={taskSuffix} type="interview" />
       </div>
       }
     </>
   );
 };
 
-export default PracticePage;
+export default InterviewPage;
