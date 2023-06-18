@@ -115,7 +115,7 @@ const UserVideoPane = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setFramesSent(prevFramesSent => prevFramesSent + 1);
-    }, 1000);
+    }, 3000);
   
     return () => clearInterval(interval);
   }, []);  
