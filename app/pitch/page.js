@@ -12,10 +12,11 @@ const PracticePage = ({ task }) => {
   const [isComponentLoaded, setIsComponentLoaded] = useState(false);
 
   if (task == null || task == "") {
-    task = "Help a student understand double descent and why it is important in Machine Learning.";
+    task = "Pitch a startup to empower users through AI teaching.";
   }
-  const taskPrefix = "You are a student. A teacher has been tasked with the following: ";
-  const taskSuffix = ". You should ask questions and act confused. Previous conversation: ";
+  const taskPrefix = "You are a venture capitalist looking to invest in new firms. A team has come to you to: ";
+  const taskSuffix = ". You should ask sharp questions about their market, their vision, their growth plan, and"
+    + " other aspects of their idea which would be relevant in predicting future commercial success.";
 
   useEffect(() => {
     setIsComponentLoaded(true);
@@ -26,7 +27,7 @@ const PracticePage = ({ task }) => {
       {isComponentLoaded && 
       <div className="w-screen h-full bg-gradient-to-b from-jetBlack-400 to-jetBlack-600">
         <h1 className="text-center text-platinum-500 text-3xl font-bold p-4 pt-16">Task: {task}</h1>
-        <DynamicVideoPane taskPrefix={taskPrefix} task={task} taskSuffix={taskSuffix} />
+        <DynamicVideoPane taskPrefix={taskPrefix} task={task} taskSuffix={taskSuffix} type="pitch" />
       </div>
       }
     </>
