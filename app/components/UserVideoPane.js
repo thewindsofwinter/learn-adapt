@@ -3,9 +3,8 @@ import dotenv from 'dotenv';
 import { ImageCapture } from 'image-capture';
 import { Buffer } from 'buffer';
 import { TopEmotions } from './TopEmotions'
-import { encodeWAVToBase64 } from './audioUtils'; // Example: custom utility function for encoding audio
 import Axios from "axios";
-
+import { AudioRecorder } from "../../lib/media/audioRecorder";
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -17,97 +16,78 @@ const UserVideoPane = () => {
   const [socket, setSocket] = useState(null);
   const [framesSent, setFramesSent] = useState(0);
   const [emotionsData, setEmotionsData] = useState([]);
-  const [audioChunks, setAudioChunks] = useState([]);
+  const [prosodyData, setProsodyData] = useState([]);
   const [encodedAudio, setEncodedAudio] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [feedback, setFeedback] = useState(null);
-
-  const [mediaRecorder, setMediaRecorder] = useState(null);
-
-  // Event handler for the 'dataavailable' event of the mediaRecorder
-  const handleAudioDataAvailable = (event) => {
-    if (event.data.size > 0) {
-      setAudioChunks((prevChunks) => [...prevChunks, event.data]);
-    }
-  };
-
-  // Function to start recording microphone audio
-  const startRecording = () => {
-    const audioTrack = mediaStream?.getAudioTracks()[0];
-      
-    // Create a new MediaStream containing only the audio track
-    const audioOnlyStream = new MediaStream([audioTrack]);
-
-    // Create the MediaRecorder using the audioOnlyStream
-    const recorder = new MediaRecorder(audioOnlyStream);
-
   
-    recorder.addEventListener('dataavailable', handleAudioDataAvailable);
-    recorder.start();
-  
-    setMediaRecorder(recorder);
-    setIsRecording(true);
-  };  
+  const recorderRef = useRef(null);
+  const audioBufferRef = useRef([]);
 
-  // Function to stop recording and encode the audio
-  const stopRecording = async () => {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      mediaRecorder.removeEventListener('dataavailable', handleAudioDataAvailable);
-      mediaRecorder.stop();
-  
-      setIsRecording(false);
-      const base64EncodedAudio = await encodeAudioToBase64(audioChunks);
-      setEncodedAudio(base64EncodedAudio);
-
-      const formData = new FormData();
-      formData.append('file', base64EncodedAudio, 'audio.mp3');
-
-      console.log("Pass");
-    
-      const response = await fetch("/api/gpt", {
-        method: 'POST',
-        body: formData
-      });
-  
-      if (response.ok) {
-        const { text } = await response.json();
-        console.log("Transcription:", text);
-        // Do something with the transcription
-      } else {
-        console.error("Error:", response.status);
-        // Handle the error
-      }
-    }
-  };
-
-  
-  const encodeAudioToBase64 = (audioChunks) => {
-    const blob = new Blob(audioChunks, { type: 'audio/mp3' });
-    return blob;
-    // return new Promise((resolve, reject) => {
-    //   const reader = new FileReader();
-    //   reader.onloadend = () => {
-    //     const base64Data = reader.result.split(',')[1];
-    //     resolve(base64Data);
-    //   };
-    //   reader.onerror = reject;
-    //   reader.readAsDataURL(blob);
-    // });
+  const handleExportData = () => {
+    const combinedBlob = new Blob(audioBufferRef.current);
+    const url = URL.createObjectURL(combinedBlob);
+    console.log('Exported blob:', url);
+    audioBufferRef.current = [];
   };  
 
   const handleDownload = () => {
     if(encodedAudio) {
-      console.log(encodedAudio);
+      // console.log(encodedAudio);
       const decodedWav = Buffer.from(encodedAudio, 'base64');
-      const url = window.URL.createObjectURL(new Blob([decodedWav], { type: 'audio/webm' }));
+      
+      const jsonMessage = {
+        models: {
+          prosody: {}
+        },
+        stream_window_ms: 5000,
+        reset_stream: false,
+        raw_text: false,
+        job_details: false,
+        payload_id: 'string',
+        data: encodedAudio,
+      };
+      
+      // console.log(jsonMessage);
+
+      if (socket) {
+        socket.send(JSON.stringify(jsonMessage));
+      }
+
+      const url = window.URL.createObjectURL(new Blob([decodedWav], { type: 'audio/wav' }));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'decoded_audio.webm');
+      link.setAttribute('download', 'decoded_audio.wav');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      setAudioChunks([]);
+      setEncodedAudio(null);
     } else {
       console.log("undefined");
+    }
+  };  
+
+  const sendAudioDataToAPI = async (audioData, socketState) => {
+    // Convert audioData to base64
+    const encodedData = await convertBlobToBase64(audioData);
+    // console.log(encodedData);
+    // console.log(socketState);
+    
+    if (socketState && socketState.readyState === WebSocket.OPEN) {
+      const jsonMessage = {
+        models: {
+          prosody: {},
+        },
+        stream_window_ms: 5000,
+        reset_stream: false,
+        raw_text: false,
+        job_details: false,
+        payload_id: 'string',
+        data: encodedData,
+      };
+
+      // console.log(JSON.stringify(jsonMessage));
+      socketState.send(JSON.stringify(jsonMessage));
     }
   };  
 
@@ -148,7 +128,7 @@ const UserVideoPane = () => {
   };
   
   useEffect(() => {
-    console.log(framesSent);
+    // console.log(framesSent);
     const sendVideoData = async (videoImageCapture) => {
       try {
         const videoFrameBlob = await videoImageCapture.grabFrame();
@@ -200,7 +180,7 @@ const UserVideoPane = () => {
 
       sendVideoData(videoImageCapture);
     } else {
-      console.log('undefined');
+      // console.log('undefined');
     }
   }, [socket, mediaStream, framesSent])
 
@@ -243,14 +223,27 @@ const UserVideoPane = () => {
       const url = `wss://api.hume.ai/v0/stream/models?apikey=${apiKey}`;
       const newSocket = new WebSocket(url);
     
-      newSocket.onopen = () => {
+      newSocket.onopen = async () => {
         console.log('WebSocket connection established');
         // Perform any necessary initialization or authentication
+
+        recorderRef.current = await AudioRecorder.create();
+        
+        // Create a closure to capture the current state of `socket`
+        (async (socket) => {        
+          console.log(socket)
+          while (socket) {
+            const blob = await recorderRef.current.record(recordingLengthMs);
+            // console.log(blob);
+            audioBufferRef.current.push(blob);
+            sendAudioDataToAPI(blob, socket);
+          }
+        })(newSocket);
       };
     
       newSocket.onmessage = (event) => {
         const message = JSON.parse(event.data);
-        console.log('Received message:', message);
+        // console.log('Received message:', message);
         // Process and display the received data
 
         handleWebSocketMessage(message);
@@ -294,11 +287,25 @@ const UserVideoPane = () => {
         return updatedData;
       });
     }
+    if(message.hasOwnProperty("prosody") && message["prosody"].hasOwnProperty("predictions")) {
+      setProsodyData((prevData) => {
+        // Append the newTimeframe to the existing emotionsData
+        const updatedData = [...prevData, message["prosody"]["predictions"][0]["emotions"]];
+    
+        // Keep only the last ten timeframes
+        if (updatedData.length > 10) {
+          updatedData.shift(); // Remove the oldest timeframe
+        }
+
+        return updatedData;
+      });
+      console.log(message["prosody"]);
+    }
   };
       
   return (
-    <div className="flex flex-row w-screen h-screen bg-jetBlack-500">
-      <div className="relative w-3/4 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">  
+    <div className="flex flex-row w-screen h-screen justify-center items-center bg-jetBlack-500">
+      <div className="relative w-2/3 h-4/5 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">  
         <div className="absolute inset-0 m-1 rounded-md">
           {microphonePermissionGranted && cameraPermissionGranted ? (
             <video ref={videoRef} className="w-full h-full object-cover rounded-md" autoPlay muted />
@@ -311,43 +318,27 @@ const UserVideoPane = () => {
           )}
         </div>
       </div>
-      <div className="relative w-1/4 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
+      <div className="relative w-1/4 h-4/5 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
         {/* Feedback Pane */}
         {/* Replace this placeholder with the FeedbackDisplay component */}
         <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500">
           <div className="p-8">
-            <h2 className="text-2xl font-bold text-platinum-500 mb-4">Live Evaluation (Hume AI)</h2>
+            <h2 className="text-2xl font-bold text-vermillion-500 mb-4">Live Evaluation (Hume AI)</h2>
 
             <h3>Body Language [last 30s]</h3>
             {emotionsData.length > 2 ? <TopEmotions emotions={emotionsData} className="top-emotions-panel" /> : "Loading..."}
 
             <h3>Vocal Prosody [last 30s]</h3>
+            {prosodyData.length > 2 ? <TopEmotions emotions={prosodyData} className="prosody-emotions-panel" /> : "Loading... (Talk some more!)"}
 
-            <h3>AI Reasoning Options</h3>
+            <h2 className="text-2xl font-bold text-vermillion-500 my-4">OpenAI Detailed Feedback</h2>
             <div className="flex justify-center mt-4">
-              <button
-                className="px-4 py-2 text-sm rounded-md bg-platinum-500 text-jetBlack-500 hover:bg-platinum-400 hover:text-jetBlack-600 disabled:bg-gray-300 disabled:text-gray-500"
-                onClick={handleDownload}
-              >
-                Download Decoded WAV
-              </button>
-            </div>
-            <div className="flex justify-center mt-4">
-            {isRecording ? (
               <button
                 className="px-4 py-2 text-sm rounded-md bg-red-500 text-white hover:bg-red-400"
-                onClick={stopRecording}
+                onClick={handleExportData}
               >
-                Stop Recording
+                Get Feedback
               </button>
-            ) : (
-              <button
-                className="px-4 py-2 text-sm rounded-md bg-green-500 text-white hover:bg-green-400"
-                onClick={startRecording}
-              >
-                Start Recording
-              </button>
-            )}
             </div>
           </div>
         </div>
