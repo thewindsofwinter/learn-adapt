@@ -31,7 +31,7 @@ export default async function handler(req, res) {
       });
 
       socket.onopen = () => {
-        console.log('WebSocket connection established');
+        // console.log('WebSocket connection established');
         // Perform any necessary initialization or authentication
         // Send the JSON message to the WebSocket server
         socket.send(JSON.stringify(jsonMessage));
@@ -39,14 +39,14 @@ export default async function handler(req, res) {
 
       socket.onmessage = (event) => {
         const message = JSON.parse(event.data);
-        console.log('Received message:', message);
+        // console.log('Received message:', message);
         // Process and handle the received data as needed
         // Send the response back to the client
         res.status(200).json({ message: 'WebSocket message received' });
       };
 
       socket.onclose = () => {
-        console.log('WebSocket connection closed');
+        // console.log('WebSocket connection closed');
         // Perform any necessary cleanup or reconnection logic
       };
     } catch (error) {
