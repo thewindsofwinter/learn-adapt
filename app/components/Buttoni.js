@@ -5,7 +5,7 @@ const Button = ({ styles, inputValue }) => (
   <button type="button" className={`py-4 px-6 font-poppins font-medium text-[18px] text-primary bg-blue-gradient rounded-[10px] outline-none ${styles}`}>
     <Link
       href={{
-        pathname: "/practice",
+        pathname: "/interview",
         query: { task: inputValue },
       }}
     >

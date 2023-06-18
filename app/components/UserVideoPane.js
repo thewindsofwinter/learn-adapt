@@ -516,9 +516,9 @@ const UserVideoPane = ({ taskPrefix, taskSuffix, task }) => {
             <div className="p-8">
               <h2 className="text-2xl font-bold text-vermillion-500 mb-4">OpenAI Virtual Interviewer</h2>
               <p className="h-fit">{question}</p>
-              <div className="flex justify-center mt-4">
+              <div className="flex justify-center mt-6 mx-3">
                 <button
-                  className="px-4 py-2 text-sm rounded-md bg-red-500 text-white hover:bg-red-600 mr-4"
+                  className="py-4 px-6 font-poppins font-medium text-[18px] text-primary bg-blue-gradient rounded-[10px] outline-none"
                   onClick={handleExportData}
                   disabled={exporting}
                 >
@@ -526,7 +526,7 @@ const UserVideoPane = ({ taskPrefix, taskSuffix, task }) => {
                 </button>
 
                 <button
-                  className="px-4 py-2 text-sm rounded-md bg-green-500 text-white hover:bg-green-600"
+                  className="py-4 px-6 font-poppins font-medium text-[18px] text-primary bg-blue-gradient rounded-[10px] mx-3 outline-none"
                   onClick={downloadCombinedTranscript}
                 >
                   Get Transcript of Conversation with AI
