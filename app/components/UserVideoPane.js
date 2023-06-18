@@ -7,14 +7,13 @@ import { TopEmotions } from './TopEmotions'
 dotenv.config(); // Load environment variables from .env file
 
 const UserVideoPane = () => {
-  const [feedback, setFeedback] = useState("");
   const videoRef = useRef(null);
   const [mediaStream, setMediaStream] = useState(null);
   const [microphonePermissionGranted, setMicrophonePermissionGranted] = useState(false);
   const [cameraPermissionGranted, setCameraPermissionGranted] = useState(false);
   const [socket, setSocket] = useState(null);
   const [framesSent, setFramesSent] = useState(0);
-  const [emotionsData, setEmotionsData] = useState(null);
+  const [emotionsData, setEmotionsData] = useState([]);
 
   const getUserMedia = async () => {
     try {
@@ -188,22 +187,24 @@ const UserVideoPane = () => {
     };
   }, []);
 
-  const encodeVideoData = (videoData) => {
-    const dataBuffer = Buffer.from(videoData);
-    const base64EncodedVideo = dataBuffer.toString('base64');
-    return base64EncodedVideo;  
-  };
-
   const handleWebSocketMessage = (message) => {
     // Process the received message, extract feedback from it
-    if(message["face"]["predictions"].length > 0) {
-      console.log(message["face"]["predictions"][0]["emotions"]);
-      const receivedFeedback = message;
-      setEmotionsData(message["face"]["predictions"][0]["emotions"])
-      setFeedback(receivedFeedback);
+    if(message.hasOwnProperty("face") && message["face"].hasOwnProperty("predictions")) {
+      setEmotionsData((prevData) => {
+        // Append the newTimeframe to the existing emotionsData
+        const updatedData = [...prevData, message["face"]["predictions"][0]["emotions"]];
+    
+        // Keep only the last ten timeframes
+        if (updatedData.length > 10) {
+          updatedData.shift(); // Remove the oldest timeframe
+        }
+    
+        console.log(updatedData);
+        return updatedData;
+      });
     }
   };
-
+      
   return (
     <div className="flex flex-row w-screen h-screen bg-jetBlack-500">
       <div className="relative w-3/4 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">  
@@ -225,7 +226,7 @@ const UserVideoPane = () => {
         <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500">
           <div className="p-8">
             <h2 className="text-2xl font-bold text-platinum-500 mb-4">Live Evaluation (Hume AI)</h2>
-            {emotionsData ? <TopEmotions emotions={emotionsData} className="top-emotions-panel" /> : "Loading..."}
+            {emotionsData.length > 2 ? <TopEmotions emotions={emotionsData} className="top-emotions-panel" /> : "Loading..."}
           </div>
         </div>
       </div>
