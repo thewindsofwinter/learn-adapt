@@ -14,7 +14,7 @@ const Hero = () => {
             In<span className="text-gradient">Sight</span>
           </h1>
           <p className={`${styles.paragraph} relative w-[470px] mt-5 text-white absolute`}>
-            Get IN to your dream jobs with our service that provides you new SIGHT and so you can VIEW your future. 
+            Get IN to your dream jobs with our service that provides you new SIGHT to VIEW your future. 
           </p>
         </div>
         <div className="relative">

@@ -14,15 +14,14 @@ import Pitch from "./components/Pitch";
 import Testimony from "./components/Testimony";
 
 export default function Home() {
-  const [inputValue, setInputValue] = useState('Help a student understand AI double descent.');
 
   return (
     <div className="bg-primary w-full overflow-hidden">
-    <div className={`${styles.paddingX} ${styles.flexCenter}`}>
-      <div className={`${styles.boxWidth}`}>
-        <Navbar />
+      <div className={`${styles.paddingX} ${styles.flexCenter}`}>
+        <div className={`${styles.boxWidth}`}>
+          <Navbar />
+        </div>
       </div>
-    </div>
 
       <div className={`bg-primary ${styles.flexStart}`}>
         <div className={`${styles.boxWidth}`}>
