@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+h3 {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #E5E4E2;
+}
