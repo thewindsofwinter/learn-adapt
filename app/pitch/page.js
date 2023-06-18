@@ -8,7 +8,7 @@ const DynamicVideoPane = dynamic(() => import('../components/UserVideoPane').the
   ssr: false, // Disable server-side rendering for this component
 });
 
-const PitchPage = ({ task }) => {
+const PitchPage = () => {
   const [isComponentLoaded, setIsComponentLoaded] = useState(false);
   const taskRef = useRef("");
 
