@@ -1,0 +1,29 @@
+const stopRecording = async () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.removeEventListener('dataavailable', handleAudioDataAvailable);
+      mediaRecorder.stop();
+  
+      setIsRecording(false);
+      const base64EncodedAudio = await encodeAudioToBase64(audioChunks);
+      setEncodedAudio(base64EncodedAudio);
+
+      const formData = new FormData();
+      formData.append('file', base64EncodedAudio, 'audio.mp3');
+
+      console.log("Pass");
+    
+      const response = await fetch("/api/gpt", {
+        method: 'POST',
+        body: formData
+      });
+  
+      if (response.ok) {
+        const { text } = await response.json();
+        console.log("Transcription:", text);
+        // Do something with the transcription
+      } else {
+        console.error("Error:", response.status);
+        // Handle the error
+      }
+    }
+  };

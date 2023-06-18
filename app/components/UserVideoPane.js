@@ -3,11 +3,12 @@ import dotenv from 'dotenv';
 import { ImageCapture } from 'image-capture';
 import { Buffer } from 'buffer';
 import { TopEmotions } from './TopEmotions'
+import axios from "axios";
 import { AudioRecorder } from "../../lib/media/audioRecorder";
 
 dotenv.config(); // Load environment variables from .env file
 
-const UserVideoPane = () => {
+const UserVideoPane = ({ task }) => {
   const videoRef = useRef(null);
   const [mediaStream, setMediaStream] = useState(null);
   const [microphonePermissionGranted, setMicrophonePermissionGranted] = useState(false);
@@ -16,56 +17,108 @@ const UserVideoPane = () => {
   const [framesSent, setFramesSent] = useState(0);
   const [emotionsData, setEmotionsData] = useState([]);
   const [prosodyData, setProsodyData] = useState([]);
-  const [encodedAudio, setEncodedAudio] = useState(null);
+  const [question, setQuestion] = useState("");
+
+  const [transcriptionCaches, setTranscriptionCaches] = useState([]);
+  const [userInputs, setUserInputs] = useState([]);
+  const [AIResponses, setAIResponses] = useState([]);
   const recordingLengthMs = 3000;
+  
+  const [exporting, setExporting] = useState(false);
 
   const recorderRef = useRef(null);
   const audioBufferRef = useRef([]);
 
-  const handleExportData = () => {
-    const combinedBlob = new Blob(audioBufferRef.current);
-    const url = URL.createObjectURL(combinedBlob);
-    console.log('Exported blob:', url);
-    audioBufferRef.current = [];
-  };  
+  const downloadCombinedTranscript = () => {
+    let combinedTranscript = `Task: ${task}\n`;
 
-  const handleDownload = () => {
-    if(encodedAudio) {
-      // console.log(encodedAudio);
-      const decodedWav = Buffer.from(encodedAudio, 'base64');
-      
-      const jsonMessage = {
-        models: {
-          prosody: {}
-        },
-        stream_window_ms: 5000,
-        reset_stream: false,
-        raw_text: false,
-        job_details: false,
-        payload_id: 'string',
-        data: encodedAudio,
-      };
-      
-      // console.log(jsonMessage);
+    // Combine the user inputs and AI responses into a single transcript
+    for (let i = 0; i < userInputs.length; i++) {
+      combinedTranscript += `User: ${userInputs[i]}\n`;
+      combinedTranscript += `GPT: ${AIResponses[i].text}\n`;
+    }
 
-      if (socket) {
-        socket.send(JSON.stringify(jsonMessage));
+    const transcriptBlob = new Blob([combinedTranscript], { type: "text/plain" });
+    const downloadLink = document.createElement("a");
+    downloadLink.href = URL.createObjectURL(transcriptBlob);
+    downloadLink.download = "transcript.txt";
+    downloadLink.click();
+  };
+
+  const handleExportData = async () => {
+    setExporting(true);
+    const sliceLength = audioBufferRef.current.length % 8;
+    let lastIndex = 0;
+
+    if(AIResponses.length > 0) {
+      lastIndex = AIResponses[AIResponses.length - 1].index;
+    }
+
+    const combinedBlob = new Blob(audioBufferRef.current.slice(-1 * sliceLength));
+    const combinedBlobBase64 = await convertBlobToBase64(combinedBlob);
+
+    const response = await fetch("/api/gpt", {
+      method: 'POST',
+      body: combinedBlobBase64
+    });
+
+    if (response.ok) {
+      const jsonResponse = await response.json();
+      console.log(jsonResponse);
+      // Use braces afterwards
+      const { transcription } = jsonResponse;
+      console.log("Transcription:", transcription);
+      // Do something with the transcription
+
+      const concatenatedTranscriptions = transcriptionCaches.slice(lastIndex).join(' ') + transcription;
+      console.log("Cumulative: " + concatenatedTranscriptions);
+
+      let prePrompt = "";
+      for(let i = 0; i < AIResponses.length; i++) {
+        prePrompt += userInputs[i];
+        prePrompt += ", ";
+        prePrompt += AIResponses[i].text;
+        prePrompt += ", ";
       }
 
-      const url = window.URL.createObjectURL(new Blob([decodedWav], { type: 'audio/wav' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'decoded_audio.wav');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Define the system prompt and user speech
+      const systemPrompt = "You are a student. A teacher has been tasked with the following: " + task + ". You should ask questions and act confused. Previous conversation: " + prePrompt;
+      console.log(systemPrompt);
+      const userSpeech = concatenatedTranscriptions;
 
-      setAudioChunks([]);
-      setEncodedAudio(null);
+      const payload = {
+        systemPrompt,
+        userSpeech
+      };
+
+      axios.post("/api/ai-response", payload)
+        .then(response => {
+          const aiResponse = response.data;
+          console.log('AI Response:', aiResponse);
+          
+          setQuestion("GPT: " + aiResponse.assistantReply);
+          userInputs.push("User: " + concatenatedTranscriptions);
+          AIResponses.push({ index: transcriptionCaches.length, text: "GPT: " + aiResponse.assistantReply });
+
+          // Update state variables
+          setUserInputs([...userInputs]);
+          setAIResponses([...AIResponses]);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          // Handle the error
+        });
+      
+      setExporting(false);
+
     } else {
-      console.log("undefined");
+      console.error("Error:", response.status);
+      setExporting(false);
+      // Handle the error
     }
-  };  
+
+    audioBufferRef.current = [];
+  };
 
   const sendAudioDataToAPI = async (audioData, socketState) => {
     // Convert audioData to base64
@@ -218,6 +271,39 @@ const UserVideoPane = () => {
     checkExistingPermissions();
     getUserMedia();
 
+    const makeAPICall = async () => {
+      const lastEightElements = audioBufferRef.current.slice(-8);
+      const combinedBlobBase64 = await convertBlobToBase64(new Blob(lastEightElements));
+    
+      try {
+        const response = await fetch("/api/gpt", {
+          method: 'POST',
+          body: combinedBlobBase64
+        });
+    
+        if (response.ok) {
+          const jsonResponse = await response.json();
+          console.log(jsonResponse);
+          // Use braces afterwards
+          const { transcription } = jsonResponse;
+
+          // Append the transcription to the transcriptions array
+          transcriptionCaches.push(transcription);
+
+          // Call the setTranscriptionCaches function to store the transcriptions array in caches
+          setTranscriptionCaches(transcriptionCaches);
+          console.log("Transcriptions:", transcriptionCaches);
+        } else {
+          console.error("Error:", response.status);
+          // Handle the error
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        // Handle the error
+      }
+    }
+    
+
     const createWebSocketConnection = async () => {
       const apiKey = process.env.NEXT_PUBLIC_HUME_API_KEY;
       const url = `wss://api.hume.ai/v0/stream/models?apikey=${apiKey}`;
@@ -236,6 +322,11 @@ const UserVideoPane = () => {
             const blob = await recorderRef.current.record(recordingLengthMs);
             // console.log(blob);
             audioBufferRef.current.push(blob);
+            if(audioBufferRef.current.length % 8 == 0) {
+              // Async to not block
+              makeAPICall();
+            }
+
             sendAudioDataToAPI(blob, socket);
           }
         })(newSocket);
@@ -304,47 +395,65 @@ const UserVideoPane = () => {
   };
       
   return (
-    <div className="flex flex-row w-screen h-screen justify-center items-center bg-jetBlack-500">
-      <div className="relative w-2/3 h-4/5 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">  
-        <div className="absolute inset-0 m-1 rounded-md">
-          {microphonePermissionGranted && cameraPermissionGranted ? (
-            <video ref={videoRef} className="w-full h-full object-cover rounded-md" autoPlay muted />
-          ) : (
-            <div className="flex items-center justify-center w-full h-full bg-jetBlack-500">
-              <p className="text-platinum-500 text-2xl rounded-md">
-                This app requires microphone and camera access to rate your teaching. Please grant access.
-              </p>
-            </div>
-          )}
+    <div className="flex flex-col h-screen bg-jetBlack-500">
+      <div className="flex flex-row h-3/5 justify-center items-top mb-8">
+        <div className="relative w-1/2 h-full m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
+          <div className="absolute inset-0 m-1 rounded-md">
+            {microphonePermissionGranted && cameraPermissionGranted ? (
+              <video ref={videoRef} className="w-full h-full object-cover rounded-md" autoPlay muted />
+            ) : (
+              <div className="flex items-center justify-center w-full h-full bg-jetBlack-500">
+                <p className="text-platinum-500 text-2xl rounded-md">
+                  This app requires microphone and camera access to rate your teaching. Please grant access.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
+        <div className="relative w-1/5 h-full m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
+          <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500 overflow-y-scroll">
+            <div className="p-8">
+              <h2 className="text-2xl font-bold text-vermillion-500 mb-4">Hume AI Evaluation</h2>
+
+              <h3>Body Language [last 30s]</h3>
+              {emotionsData.length > 2 ? <TopEmotions emotions={emotionsData} className="top-emotions-panel" /> : "Loading..."}
+
+              <h3>Vocal Prosody [last 30s]</h3>
+              {prosodyData.length > 2 ? <TopEmotions emotions={prosodyData} className="prosody-emotions-panel" /> : "Loading... (Talk some more!)"}
+            </div>
+          </div>
+        </div>
+        <canvas id="hidden-draw" className="absolute inset-0 m-1 bg-transparent" style={{ zIndex: '-1', visibility: 'hidden' }}></canvas>
       </div>
-      <div className="relative w-1/4 h-4/5 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
-        {/* Feedback Pane */}
-        {/* Replace this placeholder with the FeedbackDisplay component */}
-        <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500">
-          <div className="p-8">
-            <h2 className="text-2xl font-bold text-vermillion-500 mb-4">Live Evaluation (Hume AI)</h2>
 
-            <h3>Body Language [last 30s]</h3>
-            {emotionsData.length > 2 ? <TopEmotions emotions={emotionsData} className="top-emotions-panel" /> : "Loading..."}
+      <div className="flex flex-row justify-center items-center h-fit">
+        <div className="relative w-[calc(70%+2rem)] h-full m-4 mt-8 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
+          {/* Feedback Pane */}
+          {/* Replace this placeholder with the FeedbackDisplay component */}
+          <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500">
+            <div className="p-8">
+              <h2 className="text-2xl font-bold text-vermillion-500 mb-4">OpenAI Detailed Feedback</h2>
+              <p>{question}</p>
+              <div className="flex justify-center mt-4">
+                <button
+                  className="px-4 py-2 text-sm rounded-md bg-red-500 text-white hover:bg-red-600 mr-4"
+                  onClick={handleExportData}
+                  disabled={exporting}
+                >
+                  {exporting ? "Generating Response..." : "Get AI Response"}
+                </button>
 
-            <h3>Vocal Prosody [last 30s]</h3>
-            {prosodyData.length > 2 ? <TopEmotions emotions={prosodyData} className="prosody-emotions-panel" /> : "Loading... (Talk some more!)"}
-
-            <h2 className="text-2xl font-bold text-vermillion-500 my-4">OpenAI Detailed Feedback</h2>
-            <div className="flex justify-center mt-4">
-              <button
-                className="px-4 py-2 text-sm rounded-md bg-red-500 text-white hover:bg-red-400"
-                onClick={handleExportData}
-              >
-                Get Feedback
-              </button>
+                <button
+                  className="px-4 py-2 text-sm rounded-md bg-green-500 text-white hover:bg-green-600"
+                  onClick={downloadCombinedTranscript}
+                >
+                  Get Transcript of Conversation with AI
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      
-      <canvas id="hidden-draw" className="absolute inset-0 m-1 bg-transparent" style={{ zIndex: '-1', visibility: 'hidden' }}></canvas>
     </div>
   );
 };

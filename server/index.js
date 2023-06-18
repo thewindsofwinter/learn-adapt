@@ -7,7 +7,7 @@ app.use(express.json())
 const cors = require("cors"); //connects API to react frontend
 app.use(cors());
 
-require('dotenv').config();
+// require('dotenv').config();
 const upload = multer();
 
 const PORT = process.env.PORT || 3001;
@@ -38,18 +38,22 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "../public", "index.html"));
 });
 
-app.post("/", upload.any('file'), (req, res) => {
-    console.log(req.files); //body->form 
-    audio_file = req.files[0];
-    buffer = audio_file.buffer;
-    buffer.name = audio_file.originalname;
+app.post("/", (req, res) => {
+    //console.log(req.files); //body->form 
+    //audio_file = req.files[0];
+    const { audioData } = req.body;
+    // buffer = audio_file.buffer;
+    // buffer.name = audio_file.originalname;
+    // const response = transcribe(buffer);
+    const buffer = Buffer.from(audioData, 'base64');
+    const audioFileName = 'audio.webm'; // Set the desired audio file nam
     const response = transcribe(buffer);
 
     response.then((data) => {
         res.send({ 
             type: "POST", 
             transcription: data.data.text,
-            audioFileName: buffer.name
+            audioFileName: audioFileName
         });
     }).catch((err) => {
         res.send({ type: "POST", message: err });
