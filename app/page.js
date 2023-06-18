@@ -1,16 +1,40 @@
-import Image from 'next/image'
 import Link from 'next/link';
+import styles from "./style";
+import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
+import Concept from "./components/Concept";
+import Emotion from "./components/Emotion";
+import Interview from "./components/Interview";
+import Teaching from "./components/Teaching";
+import Pitch from "./components/Pitch";
+import Testimony from "./components/Testimony";
+
+
+
 
 export default function Home() {
   return (
-    <div className="flex items-center justify-center h-screen bg-jetBlack-500 text-platinum-500">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Interview InSight!</h1>
-        <p className="text-lg mb-8">Explore and practice with us.</p>
-        <div className="border text-vermillion-400 hover:text-vermillion-600 border-vermillion-400 hover:border-vermillion-600 rounded p-2">
-          <Link href="/practice">
-            Go to Practice Page
-          </Link>
+    <div className="bg-primary w-full overflow-hidden">
+    <div className={`${styles.paddingX} ${styles.flexCenter}`}>
+      <div className={`${styles.boxWidth}`}>
+        <Navbar />
+      </div>
+    </div>
+
+      <div className={`bg-primary ${styles.flexStart}`}>
+        <div className={`${styles.boxWidth}`}>
+          <Hero />
+        </div>
+      </div>
+    
+      <div className={`bg-primary ${styles.paddingX} ${styles.flexCenter}`}>
+        <div className={`${styles.boxWidth}`}>
+          <Concept />
+          <Teaching />
+          <Interview />
+          <Pitch />
+          <Emotion />
+          <Testimony />
         </div>
       </div>
     </div>
