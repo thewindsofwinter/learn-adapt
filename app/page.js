@@ -1,3 +1,7 @@
+"use client";
+
+import Image from 'next/image'
+import React, { useState } from 'react';
 import Link from 'next/link';
 import styles from "./style";
 import Navbar from "./components/Navbar";
@@ -10,16 +14,15 @@ import Pitch from "./components/Pitch";
 import Testimony from "./components/Testimony";
 import Footer from "./components/Footer";
 
-
-
 export default function Home() {
+
   return (
     <div className="bg-primary w-full overflow-hidden">
-    <div className={`${styles.paddingX} ${styles.flexCenter}`}>
-      <div className={`${styles.boxWidth}`}>
-        <Navbar />
+      <div className={`${styles.paddingX} ${styles.flexCenter}`}>
+        <div className={`${styles.boxWidth}`}>
+          <Navbar />
+        </div>
       </div>
-    </div>
 
       <div className={`bg-primary ${styles.flexStart}`}>
         <div className={`${styles.boxWidth}`}>
