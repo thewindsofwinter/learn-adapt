@@ -373,49 +373,57 @@ const UserVideoPane = ({ task }) => {
   };
       
   return (
-    <div className="flex flex-row h-4/5 justify-center items-top bg-jetBlack-500">
-      <div className="relative w-2/3 h-4/5 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">  
-        <div className="absolute inset-0 m-1 rounded-md">
-          {microphonePermissionGranted && cameraPermissionGranted ? (
-            <video ref={videoRef} className="w-full h-full object-cover rounded-md" autoPlay muted />
-          ) : (
-            <div className="flex items-center justify-center w-full h-full bg-jetBlack-500">
-              <p className="text-platinum-500 text-2xl rounded-md">
-                This app requires microphone and camera access to rate your teaching. Please grant access.
-              </p>
-            </div>
-          )}
+    <div className="flex flex-col h-screen bg-jetBlack-500">
+      <div className="flex flex-row h-3/5 justify-center items-top mb-8">
+        <div className="relative w-1/2 h-full m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
+          <div className="absolute inset-0 m-1 rounded-md">
+            {microphonePermissionGranted && cameraPermissionGranted ? (
+              <video ref={videoRef} className="w-full h-full object-cover rounded-md" autoPlay muted />
+            ) : (
+              <div className="flex items-center justify-center w-full h-full bg-jetBlack-500">
+                <p className="text-platinum-500 text-2xl rounded-md">
+                  This app requires microphone and camera access to rate your teaching. Please grant access.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
+        <div className="relative w-1/5 h-full m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
+          <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500 overflow-y-scroll">
+            <div className="p-8">
+              <h2 className="text-2xl font-bold text-vermillion-500 mb-4">Hume AI Evaluation</h2>
+
+              <h3>Body Language [last 30s]</h3>
+              {emotionsData.length > 2 ? <TopEmotions emotions={emotionsData} className="top-emotions-panel" /> : "Loading..."}
+
+              <h3>Vocal Prosody [last 30s]</h3>
+              {prosodyData.length > 2 ? <TopEmotions emotions={prosodyData} className="prosody-emotions-panel" /> : "Loading... (Talk some more!)"}
+            </div>
+          </div>
+        </div>
+        <canvas id="hidden-draw" className="absolute inset-0 m-1 bg-transparent" style={{ zIndex: '-1', visibility: 'hidden' }}></canvas>
       </div>
-      <div className="relative w-1/4 h-4/5 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
-        {/* Feedback Pane */}
-        {/* Replace this placeholder with the FeedbackDisplay component */}
-        <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500 overflow-y-scroll">
-          <div className="p-8">
-            <h2 className="text-2xl font-bold text-vermillion-500 mb-4">Live Evaluation (Hume AI)</h2>
 
-            <h3>Body Language [last 30s]</h3>
-            {emotionsData.length > 2 ? <TopEmotions emotions={emotionsData} className="top-emotions-panel" /> : "Loading..."}
-
-            <h3>Vocal Prosody [last 30s]</h3>
-            {prosodyData.length > 2 ? <TopEmotions emotions={prosodyData} className="prosody-emotions-panel" /> : "Loading... (Talk some more!)"}
-
-            <h2 className="text-2xl font-bold text-vermillion-500 my-4">OpenAI Detailed Feedback</h2>
-            <p>{question}</p>
-
-            <div className="flex justify-center mt-4">
-              <button
-                className="px-4 py-2 text-sm rounded-md bg-red-500 text-white hover:bg-vermillion-600"
-                onClick={handleExportData}
-              >
-                Get AI Response
-              </button>
+      <div className="flex flex-row justify-center items-center h-1/4">
+        <div className="relative w-[calc(70%+2rem)] h-full m-4 mt-8 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
+          {/* Feedback Pane */}
+          {/* Replace this placeholder with the FeedbackDisplay component */}
+          <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500">
+            <div className="p-8">
+              <h2 className="text-2xl font-bold text-vermillion-500 mb-4">OpenAI Detailed Feedback</h2>
+              <p>{question}</p>
+              <div className="flex justify-center mt-4">
+                <button
+                  className="px-4 py-2 text-sm rounded-md bg-red-500 text-white hover:bg-vermillion-600"
+                  onClick={handleExportData}
+                >
+                  Get AI Response
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      
-      <canvas id="hidden-draw" className="absolute inset-0 m-1 bg-transparent" style={{ zIndex: '-1', visibility: 'hidden' }}></canvas>
     </div>
   );
 };
