@@ -8,7 +8,7 @@ const DynamicVideoPane = dynamic(() => import('../components/UserVideoPane').the
   ssr: false, // Disable server-side rendering for this component
 });
 
-const PracticePage = ({ task }) => {
+const PitchPage = ({ task }) => {
   const [isComponentLoaded, setIsComponentLoaded] = useState(false);
 
   if (task == null || task == "") {
@@ -34,4 +34,4 @@ const PracticePage = ({ task }) => {
   );
 };
 
-export default PracticePage;
+export default PitchPage;
