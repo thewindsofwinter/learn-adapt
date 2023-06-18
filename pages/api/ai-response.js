@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   try {
     // Create chat completion payload
     const payload = {
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4-32k',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userSpeech },

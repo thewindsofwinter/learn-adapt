@@ -27,6 +27,22 @@ const UserVideoPane = ({ task }) => {
   const recorderRef = useRef(null);
   const audioBufferRef = useRef([]);
 
+  const generateCombinedTranscript = () => {
+    let combinedTranscript = `Task: ${task}\n`;
+
+    // Combine the user inputs and AI responses into a single transcript
+    for (let i = 0; i < userInputs.length; i++) {
+      combinedTranscript += `User: ${userInputs[i]}\n`;
+      combinedTranscript += `GPT: ${AIResponses[i].text}\n`;
+    }
+
+    const transcriptBlob = new Blob([combinedTranscript], { type: "text/plain" });
+    const downloadLink = document.createElement("a");
+    downloadLink.href = URL.createObjectURL(transcriptBlob);
+    downloadLink.download = "transcript.txt";
+    downloadLink.click();
+  };
+
   const handleExportData = async () => {
     const sliceLength = audioBufferRef.current.length % 8;
     let lastIndex = 0;
@@ -414,10 +430,17 @@ const UserVideoPane = ({ task }) => {
               <p>{question}</p>
               <div className="flex justify-center mt-4">
                 <button
-                  className="px-4 py-2 text-sm rounded-md bg-red-500 text-white hover:bg-vermillion-600"
+                  className="px-4 py-2 text-sm rounded-md bg-red-500 text-white hover:bg-red-600"
                   onClick={handleExportData}
                 >
                   Get AI Response
+                </button>
+
+                <button
+                  className="px-4 py-2 text-sm rounded-md bg-green-500 text-white hover:bg-green-600"
+                  onClick={downloadTranscript}
+                >
+                  Get Transcript of Conversation with AI
                 </button>
               </div>
             </div>
