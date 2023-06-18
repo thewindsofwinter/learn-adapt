@@ -17,7 +17,7 @@ app.listen(PORT, () => {
 });
 
 const configuration = new Configuration({
-    apiKey: "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"
+    apiKey: process.env.OPENAI_API_KEY
 });
 
 const openai = new OpenAIApi(configuration);
