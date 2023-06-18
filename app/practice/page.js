@@ -19,7 +19,7 @@ const PracticePage = () => {
   return (
     <>
       {isComponentLoaded && 
-      <div className="w-screen h-screen bg-jetBlack-500">
+      <div className="w-screen h-full bg-gradient-to-b from-jetBlack-400 to-jetBlack-600">
         <h1 className="text-center text-platinum-500 text-3xl font-bold p-4 pt-16">Task: {task}</h1>
         <DynamicVideoPane task={task} />
       </div>

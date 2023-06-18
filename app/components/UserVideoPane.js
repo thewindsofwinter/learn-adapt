@@ -477,7 +477,7 @@ const UserVideoPane = ({ task }) => {
   };
       
   return (
-    <div className="flex flex-col h-screen bg-jetBlack-500">
+    <div className="flex flex-col h-screen">
       <div className="flex flex-row h-3/5 justify-center items-top mb-8">
         <div className="relative w-1/2 h-full m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
           <div className="absolute inset-0 m-1 rounded-md">
