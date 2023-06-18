@@ -15,7 +15,7 @@ const Business = () => {
         </h2>
         <p className={`${styles.paragraph} max-w-[470px] mt-5 pb-4`}>
           Practice your pitching skills and public speaking.
-          Make your pitch concise, compelling, and 
+          Make your pitch concise and compelling.
         </p>
 
         <div className="pb-4">
