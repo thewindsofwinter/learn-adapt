@@ -497,10 +497,10 @@ const UserVideoPane = ({ task }) => {
             <div className="p-8">
               <h2 className="text-2xl font-bold text-vermillion-500 mb-4">Hume AI Evaluation</h2>
 
-              <h3>Body Language [last 30s]</h3>
+              <h3>Body Language</h3>
               {emotionsData.length > 2 ? <TopEmotions emotions={emotionsData} className="top-emotions-panel" /> : "Loading..."}
 
-              <h3>Vocal Prosody [last 30s]</h3>
+              <h3>Vocal Prosody</h3>
               {prosodyData.length > 2 ? <TopEmotions emotions={prosodyData} className="prosody-emotions-panel" /> : "Loading... (Talk some more!)"}
             </div>
           </div>
@@ -514,7 +514,7 @@ const UserVideoPane = ({ task }) => {
           {/* Replace this placeholder with the FeedbackDisplay component */}
           <div className="inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500">
             <div className="p-8">
-              <h2 className="text-2xl font-bold text-vermillion-500 mb-4">OpenAI Detailed Feedback</h2>
+              <h2 className="text-2xl font-bold text-vermillion-500 mb-4">OpenAI Virtual Interviewer</h2>
               <p className="h-fit">{question}</p>
               <div className="flex justify-center mt-4">
                 <button
