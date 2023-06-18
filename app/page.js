@@ -1,58 +1,44 @@
 "use client";
 
 import Image from 'next/image'
-import Link from 'next/link';
 import React, { useState } from 'react';
+import Link from 'next/link';
+import styles from "./style";
+import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
+import Concept from "./components/Concept";
+import Emotion from "./components/Emotion";
+import Interview from "./components/Interview";
+import Teaching from "./components/Teaching";
+import Pitch from "./components/Pitch";
+import Testimony from "./components/Testimony";
+
 
 export default function Home() {
   const [inputValue, setInputValue] = useState('Help a student understand AI double descent.');
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gradient-to-b from-jetBlack-400 to-jetBlack-600 text-platinum-500">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Interview InSight!</h1>
-        <p className="text-lg mb-8">Explore and practice with us.</p>
-        
-        <div className="pb-4">
-          <p>I want to... <input
-              className="w-96 p-2 text-jetBlack-500 ml-4"
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-            /></p>
-        </div>
+    <div className="bg-primary w-full overflow-hidden">
+    <div className={`${styles.paddingX} ${styles.flexCenter}`}>
+      <div className={`${styles.boxWidth}`}>
+        <Navbar />
+      </div>
+    </div>
 
-        <div className="flex flex-row gap-x-4">
-          <div className="border w-fit text-vermillion-400 hover:text-vermillion-600 border-vermillion-400 hover:border-vermillion-600 rounded p-2 m-auto">
-            <Link
-              href={{
-                pathname: "/practice",
-                query: { task: inputValue },
-              }}
-            >
-              Go to Teaching Practice
-            </Link>
-          </div>
-          <div className="border w-fit text-vermillion-400 hover:text-vermillion-600 border-vermillion-400 hover:border-vermillion-600 rounded p-2 m-auto">
-            <Link
-              href={{
-                pathname: "/interview",
-                query: { task: inputValue },
-              }}
-            >
-              Go to Interview Preparation
-            </Link>
-          </div>
-          <div className="border w-fit text-vermillion-400 hover:text-vermillion-600 border-vermillion-400 hover:border-vermillion-600 rounded p-2 m-auto">
-            <Link
-              href={{
-                pathname: "/pitch",
-                query: { task: inputValue },
-              }}
-            >
-              Go to Practice Pitch
-            </Link>
-          </div>
+      <div className={`bg-primary ${styles.flexStart}`}>
+        <div className={`${styles.boxWidth}`}>
+          <Hero />
+        </div>
+      </div>
+    
+      <div className={`bg-primary ${styles.paddingX} ${styles.flexCenter}`}>
+        <div className={`${styles.boxWidth}`}>
+          <Concept />
+          <Teaching />
+          <Interview />
+          <Pitch />
+          <Emotion />
+          <Testimony />
         </div>
       </div>
     </div>
