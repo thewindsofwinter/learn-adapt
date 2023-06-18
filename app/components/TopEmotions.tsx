@@ -3,9 +3,9 @@ import { Chart, CategoryScale, LinearScale, LineController, LineElement, PointEl
 import { Emotion } from "../../lib/data/emotion";
 
 export function TopEmotions({ emotions }: { emotions: Emotion[][] }) {
-  const chartRef = useRef(null);
-  const chartInstance = useRef(null);
-  const [legendData, setLegendData] = useState([]);
+  const chartRef = useRef<HTMLCanvasElement | null>(null);
+  const chartInstance = useRef<Chart<"line", (string | null)[], string> | null>(null);
+  const [legendData, setLegendData] = useState<{ emotion: string; color: string }[]>([]);
 
   useEffect(() => {
     const labels = emotions.map((_, index) => `Time Step ${index + 1}`);
@@ -81,7 +81,7 @@ export function TopEmotions({ emotions }: { emotions: Emotion[][] }) {
         chartInstance.current.update();
       }
 
-      if (chartInstance.current?.legend) {
+      if (chartInstance.current?.legend?.legendItems) {
         chartInstance.current.legend.legendItems.forEach((legendItem) => {
           legendItem.fillStyle = legendItem.strokeStyle;
           legendItem.lineWidth = 0;
@@ -108,7 +108,7 @@ export function TopEmotions({ emotions }: { emotions: Emotion[][] }) {
   );
 }
 
-function generateDistinctColor(index, totalColors) {
+function generateDistinctColor(index: number, totalColors: number) {
   const hue = (index * (360 / totalColors)) % 360;
   const saturation = 80;
   const value = 70;
