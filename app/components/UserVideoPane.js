@@ -24,10 +24,12 @@ const UserVideoPane = ({ task }) => {
   const [AIResponses, setAIResponses] = useState([]);
   const recordingLengthMs = 3000;
   
+  const [exporting, setExporting] = useState(false);
+
   const recorderRef = useRef(null);
   const audioBufferRef = useRef([]);
 
-  const generateCombinedTranscript = () => {
+  const downloadCombinedTranscript = () => {
     let combinedTranscript = `Task: ${task}\n`;
 
     // Combine the user inputs and AI responses into a single transcript
@@ -44,6 +46,7 @@ const UserVideoPane = ({ task }) => {
   };
 
   const handleExportData = async () => {
+    setExporting(true);
     const sliceLength = audioBufferRef.current.length % 8;
     let lastIndex = 0;
 
@@ -105,9 +108,12 @@ const UserVideoPane = ({ task }) => {
           console.error('Error:', error);
           // Handle the error
         });
+      
+      setExporting(false);
 
     } else {
       console.error("Error:", response.status);
+      setExporting(false);
       // Handle the error
     }
 
@@ -420,7 +426,7 @@ const UserVideoPane = ({ task }) => {
         <canvas id="hidden-draw" className="absolute inset-0 m-1 bg-transparent" style={{ zIndex: '-1', visibility: 'hidden' }}></canvas>
       </div>
 
-      <div className="flex flex-row justify-center items-center h-1/4">
+      <div className="flex flex-row justify-center items-center h-fit">
         <div className="relative w-[calc(70%+2rem)] h-full m-4 mt-8 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
           {/* Feedback Pane */}
           {/* Replace this placeholder with the FeedbackDisplay component */}
@@ -430,15 +436,16 @@ const UserVideoPane = ({ task }) => {
               <p>{question}</p>
               <div className="flex justify-center mt-4">
                 <button
-                  className="px-4 py-2 text-sm rounded-md bg-red-500 text-white hover:bg-red-600"
+                  className="px-4 py-2 text-sm rounded-md bg-red-500 text-white hover:bg-red-600 mr-4"
                   onClick={handleExportData}
+                  disabled={exporting}
                 >
-                  Get AI Response
+                  {exporting ? "Generating Response..." : "Get AI Response"}
                 </button>
 
                 <button
                   className="px-4 py-2 text-sm rounded-md bg-green-500 text-white hover:bg-green-600"
-                  onClick={downloadTranscript}
+                  onClick={downloadCombinedTranscript}
                 >
                   Get Transcript of Conversation with AI
                 </button>
