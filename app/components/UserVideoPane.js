@@ -129,7 +129,7 @@ const UserVideoPane = ({ task }) => {
 
       // Define the system prompt and user speech
       const systemPrompt = "You are a student. A teacher has been tasked with the following: " + task + ". You should ask questions and act confused. Previous conversation: " + prePrompt;
-      console.log(systemPrompt);
+      //console.log(systemPrompt);
       const userSpeech = concatenatedTranscriptions + " Context: The user had " + contextEmotion + " as the highest emotion in their speech and " + videoContextEmotion 
         + " as the highest emotion in their body language during this current response.";
 
