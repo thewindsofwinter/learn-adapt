@@ -20,14 +20,22 @@ const UserVideoPane = ({ task }) => {
   const [question, setQuestion] = useState("");
 
   const [transcriptionCaches, setTranscriptionCaches] = useState([]);
-  const [aiResponses, setaiResponses] = useState({});
+  const [userInputs, setUserInputs] = useState([]);
+  const [AIResponses, setAIResponses] = useState([]);
   const recordingLengthMs = 3000;
   
   const recorderRef = useRef(null);
   const audioBufferRef = useRef([]);
 
   const handleExportData = async () => {
-    const combinedBlob = new Blob(audioBufferRef.current);
+    const sliceLength = audioBufferRef.current.length % 8;
+    let lastIndex = 0;
+
+    if(AIResponses.length > 0) {
+      lastIndex = AIResponses[AIResponses.length - 1].index;
+    }
+
+    const combinedBlob = new Blob(audioBufferRef.current.slice(-1 * sliceLength));
     const combinedBlobBase64 = await convertBlobToBase64(combinedBlob);
 
     const response = await fetch("/api/gpt", {
@@ -43,9 +51,21 @@ const UserVideoPane = ({ task }) => {
       console.log("Transcription:", transcription);
       // Do something with the transcription
 
+      const concatenatedTranscriptions = transcriptionCaches.slice(lastIndex).join(' ') + transcription;
+      console.log("Cumulative: " + concatenatedTranscriptions);
+
+      let prePrompt = "";
+      for(let i = 0; i < AIResponses.length; i++) {
+        prePrompt += userInputs[i];
+        prePrompt += ", ";
+        prePrompt += AIResponses[i].text;
+        prePrompt += ", ";
+      }
+
       // Define the system prompt and user speech
-      const systemPrompt = "You are a student. A teacher has been tasked with the following: " + task + ". You should ask questions and act confused.";
-      const userSpeech = transcription;
+      const systemPrompt = "You are a student. A teacher has been tasked with the following: " + task + ". You should ask questions and act confused. Previous conversation: " + prePrompt;
+      console.log(systemPrompt);
+      const userSpeech = concatenatedTranscriptions;
 
       const payload = {
         systemPrompt,
@@ -58,7 +78,12 @@ const UserVideoPane = ({ task }) => {
           console.log('AI Response:', aiResponse);
           
           setQuestion("GPT: " + aiResponse.assistantReply);
-          // Handle the AI response
+          userInputs.push("User: " + concatenatedTranscriptions);
+          AIResponses.push({ index: transcriptionCaches.length, text: "GPT: " + aiResponse.assistantReply });
+
+          // Update state variables
+          setUserInputs([...userInputs]);
+          setAIResponses([...AIResponses]);
         })
         .catch(error => {
           console.error('Error:', error);
@@ -225,8 +250,8 @@ const UserVideoPane = ({ task }) => {
     getUserMedia();
 
     const makeAPICall = async () => {
-      const lastFiveElements = audioBufferRef.current.slice(-5);
-      const combinedBlobBase64 = await convertBlobToBase64(new Blob(lastFiveElements));
+      const lastEightElements = audioBufferRef.current.slice(-8);
+      const combinedBlobBase64 = await convertBlobToBase64(new Blob(lastEightElements));
     
       try {
         const response = await fetch("/api/gpt", {
@@ -239,7 +264,13 @@ const UserVideoPane = ({ task }) => {
           console.log(jsonResponse);
           // Use braces afterwards
           const { transcription } = jsonResponse;
-          console.log("Transcription:", transcription);
+
+          // Append the transcription to the transcriptions array
+          transcriptionCaches.push(transcription);
+
+          // Call the setTranscriptionCaches function to store the transcriptions array in caches
+          setTranscriptionCaches(transcriptionCaches);
+          console.log("Transcriptions:", transcriptionCaches);
         } else {
           console.error("Error:", response.status);
           // Handle the error
@@ -269,7 +300,7 @@ const UserVideoPane = ({ task }) => {
             const blob = await recorderRef.current.record(recordingLengthMs);
             // console.log(blob);
             audioBufferRef.current.push(blob);
-            if(audioBufferRef.current.length % 5 == 0) {
+            if(audioBufferRef.current.length % 8 == 0) {
               // Async to not block
               makeAPICall();
             }
@@ -359,7 +390,7 @@ const UserVideoPane = ({ task }) => {
       <div className="relative w-1/4 h-4/5 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
         {/* Feedback Pane */}
         {/* Replace this placeholder with the FeedbackDisplay component */}
-        <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500">
+        <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500 overflow-y-scroll">
           <div className="p-8">
             <h2 className="text-2xl font-bold text-vermillion-500 mb-4">Live Evaluation (Hume AI)</h2>
 
