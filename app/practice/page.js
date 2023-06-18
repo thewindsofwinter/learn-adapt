@@ -10,6 +10,7 @@ const DynamicVideoPane = dynamic(() => import('../components/UserVideoPane').the
 
 const PracticePage = () => {
   const [isComponentLoaded, setIsComponentLoaded] = useState(false);
+  const task = "Help a student understand double descent and why it is important in Machine Learning.";
 
   useEffect(() => {
     setIsComponentLoaded(true);
@@ -17,7 +18,12 @@ const PracticePage = () => {
 
   return (
     <>
-      {isComponentLoaded && <DynamicVideoPane />}
+      {isComponentLoaded && 
+      <div className="w-screen h-screen bg-jetBlack-500">
+        <h1 className="text-center text-platinum-500 text-3xl font-bold p-4 pt-16">Task: {task}</h1>
+        <DynamicVideoPane task={task} />
+      </div>
+      }
     </>
   );
 };

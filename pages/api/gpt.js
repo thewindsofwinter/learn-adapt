@@ -1,18 +1,22 @@
 import axios from 'axios';
 import FormData from 'form-data';
-import { createReadStream } from 'fs';
+import { Readable } from 'stream';
+
+const bufferToStream = (buffer) => {
+  return Readable.from(buffer);
+}
+
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    try {
-      const audioFile = req.files[0];
-      if (!audioFile) {
-        res.status(400).json({ error: 'No audio file provided' });
-        return;
-      }
-      
+    try {    
+      console.log(req.body);
+      const base64Audio = req.body;
+      const audioBuffer = Buffer.from(base64Audio, 'base64');
+
       const formData = new FormData();
-      formData.append('file', createReadStream(audioFile.path), 'audio.mp3');
+      const audioStream = bufferToStream(audioBuffer);
+      formData.append('file', audioStream, { filename: 'audio.webm', contentType: "audio/webm" });
       formData.append('model', 'whisper-1');
       
       const response = await axios.post(
@@ -21,13 +25,13 @@ export default async function handler(req, res) {
         {
           headers: {
             ...formData.getHeaders(),
-            Authorization: `Bearer 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`,
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
           },
         }
       );
 
       const transcription = response.data.text;
-      res.json({ transcription });
+      res.status(200).json({ transcription });
     } catch (error) {
       console.error('Error transcribing audio:', error);
       res.status(500).json({ error: 'Error transcribing audio' });

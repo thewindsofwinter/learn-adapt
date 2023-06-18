@@ -3,12 +3,12 @@ import dotenv from 'dotenv';
 import { ImageCapture } from 'image-capture';
 import { Buffer } from 'buffer';
 import { TopEmotions } from './TopEmotions'
-import Axios from "axios";
+import axios from "axios";
 import { AudioRecorder } from "../../lib/media/audioRecorder";
 
 dotenv.config(); // Load environment variables from .env file
 
-const UserVideoPane = () => {
+const UserVideoPane = ({ task }) => {
   const videoRef = useRef(null);
   const [mediaStream, setMediaStream] = useState(null);
   const [microphonePermissionGranted, setMicrophonePermissionGranted] = useState(false);
@@ -17,55 +17,61 @@ const UserVideoPane = () => {
   const [framesSent, setFramesSent] = useState(0);
   const [emotionsData, setEmotionsData] = useState([]);
   const [prosodyData, setProsodyData] = useState([]);
-  const [encodedAudio, setEncodedAudio] = useState(null);
+  const [question, setQuestion] = useState("");
+
+  const [transcriptionCaches, setTranscriptionCaches] = useState([]);
+  const [aiResponses, setaiResponses] = useState({});
+  const recordingLengthMs = 3000;
   
   const recorderRef = useRef(null);
   const audioBufferRef = useRef([]);
 
-  const handleExportData = () => {
+  const handleExportData = async () => {
     const combinedBlob = new Blob(audioBufferRef.current);
-    const url = URL.createObjectURL(combinedBlob);
-    console.log('Exported blob:', url);
-    audioBufferRef.current = [];
-  };  
+    const combinedBlobBase64 = await convertBlobToBase64(combinedBlob);
 
-  const handleDownload = () => {
-    if(encodedAudio) {
-      // console.log(encodedAudio);
-      const decodedWav = Buffer.from(encodedAudio, 'base64');
-      
-      const jsonMessage = {
-        models: {
-          prosody: {}
-        },
-        stream_window_ms: 5000,
-        reset_stream: false,
-        raw_text: false,
-        job_details: false,
-        payload_id: 'string',
-        data: encodedAudio,
+    const response = await fetch("/api/gpt", {
+      method: 'POST',
+      body: combinedBlobBase64
+    });
+
+    if (response.ok) {
+      const jsonResponse = await response.json();
+      console.log(jsonResponse);
+      // Use braces afterwards
+      const { transcription } = jsonResponse;
+      console.log("Transcription:", transcription);
+      // Do something with the transcription
+
+      // Define the system prompt and user speech
+      const systemPrompt = "You are a student. A teacher has been tasked with the following: " + task + ". You should ask questions and act confused.";
+      const userSpeech = transcription;
+
+      const payload = {
+        systemPrompt,
+        userSpeech
       };
-      
-      // console.log(jsonMessage);
 
-      if (socket) {
-        socket.send(JSON.stringify(jsonMessage));
-      }
+      axios.post("/api/ai-response", payload)
+        .then(response => {
+          const aiResponse = response.data;
+          console.log('AI Response:', aiResponse);
+          
+          setQuestion("GPT: " + aiResponse.assistantReply);
+          // Handle the AI response
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          // Handle the error
+        });
 
-      const url = window.URL.createObjectURL(new Blob([decodedWav], { type: 'audio/wav' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'decoded_audio.wav');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      setAudioChunks([]);
-      setEncodedAudio(null);
     } else {
-      console.log("undefined");
+      console.error("Error:", response.status);
+      // Handle the error
     }
-  };  
+
+    audioBufferRef.current = [];
+  };
 
   const sendAudioDataToAPI = async (audioData, socketState) => {
     // Convert audioData to base64
@@ -218,6 +224,33 @@ const UserVideoPane = () => {
     checkExistingPermissions();
     getUserMedia();
 
+    const makeAPICall = async () => {
+      const lastFiveElements = audioBufferRef.current.slice(-5);
+      const combinedBlobBase64 = await convertBlobToBase64(new Blob(lastFiveElements));
+    
+      try {
+        const response = await fetch("/api/gpt", {
+          method: 'POST',
+          body: combinedBlobBase64
+        });
+    
+        if (response.ok) {
+          const jsonResponse = await response.json();
+          console.log(jsonResponse);
+          // Use braces afterwards
+          const { transcription } = jsonResponse;
+          console.log("Transcription:", transcription);
+        } else {
+          console.error("Error:", response.status);
+          // Handle the error
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        // Handle the error
+      }
+    }
+    
+
     const createWebSocketConnection = async () => {
       const apiKey = process.env.NEXT_PUBLIC_HUME_API_KEY;
       const url = `wss://api.hume.ai/v0/stream/models?apikey=${apiKey}`;
@@ -236,6 +269,11 @@ const UserVideoPane = () => {
             const blob = await recorderRef.current.record(recordingLengthMs);
             // console.log(blob);
             audioBufferRef.current.push(blob);
+            if(audioBufferRef.current.length % 5 == 0) {
+              // Async to not block
+              makeAPICall();
+            }
+
             sendAudioDataToAPI(blob, socket);
           }
         })(newSocket);
@@ -304,7 +342,7 @@ const UserVideoPane = () => {
   };
       
   return (
-    <div className="flex flex-row w-screen h-screen justify-center items-center bg-jetBlack-500">
+    <div className="flex flex-row h-4/5 justify-center items-top bg-jetBlack-500">
       <div className="relative w-2/3 h-4/5 m-4 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">  
         <div className="absolute inset-0 m-1 rounded-md">
           {microphonePermissionGranted && cameraPermissionGranted ? (
@@ -332,12 +370,14 @@ const UserVideoPane = () => {
             {prosodyData.length > 2 ? <TopEmotions emotions={prosodyData} className="prosody-emotions-panel" /> : "Loading... (Talk some more!)"}
 
             <h2 className="text-2xl font-bold text-vermillion-500 my-4">OpenAI Detailed Feedback</h2>
+            <p>{question}</p>
+
             <div className="flex justify-center mt-4">
               <button
-                className="px-4 py-2 text-sm rounded-md bg-red-500 text-white hover:bg-red-400"
+                className="px-4 py-2 text-sm rounded-md bg-red-500 text-white hover:bg-vermillion-600"
                 onClick={handleExportData}
               >
-                Get Feedback
+                Get AI Response
               </button>
             </div>
           </div>
