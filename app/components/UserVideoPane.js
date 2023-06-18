@@ -4,6 +4,8 @@ import { ImageCapture } from 'image-capture';
 import { Buffer } from 'buffer';
 import { TopEmotions } from './TopEmotions'
 import { encodeWAVToBase64 } from './audioUtils'; // Example: custom utility function for encoding audio
+import Axios from "axios";
+
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -18,6 +20,7 @@ const UserVideoPane = () => {
   const [audioChunks, setAudioChunks] = useState([]);
   const [encodedAudio, setEncodedAudio] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [feedback, setFeedback] = useState(null);
 
   const [mediaRecorder, setMediaRecorder] = useState(null);
 
@@ -55,20 +58,41 @@ const UserVideoPane = () => {
       setIsRecording(false);
       const base64EncodedAudio = await encodeAudioToBase64(audioChunks);
       setEncodedAudio(base64EncodedAudio);
+
+      const formData = new FormData();
+      formData.append('file', base64EncodedAudio, 'audio.mp3');
+
+      console.log("Pass");
+    
+      const response = await fetch("/api/gpt", {
+        method: 'POST',
+        body: formData
+      });
+  
+      if (response.ok) {
+        const { text } = await response.json();
+        console.log("Transcription:", text);
+        // Do something with the transcription
+      } else {
+        console.error("Error:", response.status);
+        // Handle the error
+      }
     }
   };
+
   
   const encodeAudioToBase64 = (audioChunks) => {
-    const blob = new Blob(audioChunks, { type: 'audio/webm' });
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64Data = reader.result.split(',')[1];
-        resolve(base64Data);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
+    const blob = new Blob(audioChunks, { type: 'audio/mp3' });
+    return blob;
+    // return new Promise((resolve, reject) => {
+    //   const reader = new FileReader();
+    //   reader.onloadend = () => {
+    //     const base64Data = reader.result.split(',')[1];
+    //     resolve(base64Data);
+    //   };
+    //   reader.onerror = reject;
+    //   reader.readAsDataURL(blob);
+    // });
   };  
 
   const handleDownload = () => {
