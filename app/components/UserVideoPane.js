@@ -426,14 +426,14 @@ const UserVideoPane = ({ task }) => {
         <canvas id="hidden-draw" className="absolute inset-0 m-1 bg-transparent" style={{ zIndex: '-1', visibility: 'hidden' }}></canvas>
       </div>
 
-      <div className="flex flex-row justify-center items-center h-fit">
-        <div className="relative w-[calc(70%+2rem)] h-full m-4 mt-8 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
+      <div className="flex flex-row justify-center items-center">
+        <div className="relative w-[calc(70%+2rem)] h-fit m-4 mt-8 rounded-lg bg-gradient-to-br from-vermillion-400 to-vermillion-600">
           {/* Feedback Pane */}
           {/* Replace this placeholder with the FeedbackDisplay component */}
-          <div className="absolute inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500">
+          <div className="inset-0 m-1 bg-jetBlack-500 rounded-md text-platinum-500">
             <div className="p-8">
               <h2 className="text-2xl font-bold text-vermillion-500 mb-4">OpenAI Detailed Feedback</h2>
-              <p>{question}</p>
+              <p className="h-fit">{question}</p>
               <div className="flex justify-center mt-4">
                 <button
                   className="px-4 py-2 text-sm rounded-md bg-red-500 text-white hover:bg-red-600 mr-4"
