@@ -10,7 +10,7 @@ const bufferToStream = (buffer) => {
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {    
-      console.log(req.body);
+      //console.log(req.body);
       const base64Audio = req.body;
       const audioBuffer = Buffer.from(base64Audio, 'base64');
 
