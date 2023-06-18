@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import { ImageCapture } from 'image-capture';
 import { Buffer } from 'buffer';
 import { TopEmotions } from './TopEmotions'
-import { encodeWAVToBase64 } from './audioUtils'; // Example: custom utility function for encoding audio
+import { AudioRecorder } from "../../lib/media/audioRecorder";
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -20,30 +20,84 @@ const UserVideoPane = () => {
   const [isRecording, setIsRecording] = useState(false);
 
   const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [initialHeader, setInitialHeader] = useState(null);
+
+  const recorderRef = useRef(null);
+  const audioBufferRef = useRef([]);
+
+  const readFirst44BytesFromBlob = async (blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+  
+      reader.onloadend = function() {
+        const arrayBuffer = reader.result;
+        const first44Bytes = new Uint8Array(arrayBuffer, 0, 44);
+        resolve(first44Bytes);
+      };
+  
+      reader.onerror = reject;
+  
+      reader.readAsArrayBuffer(blob);
+    });
+  }  
 
   // Event handler for the 'dataavailable' event of the mediaRecorder
-  const handleAudioDataAvailable = (event) => {
+  const handleAudioDataAvailable = async (event) => {
     if (event.data.size > 0) {
+      let blobData = event.data;
+      if(audioChunks.length > 0) {
+        blobData = new Blob(initialHeader, blobData);
+      }
+      else {
+        setInitialHeader(readFirst44BytesFromBlob(blobData));
+      }
       setAudioChunks((prevChunks) => [...prevChunks, event.data]);
+
+      const base64EncodedAudio = await encodeAudioToBase64([blobData]);
+      
+      const jsonMessage = {
+        models: {
+          prosody: {}
+        },
+        stream_window_ms: 5000,
+        reset_stream: false,
+        raw_text: false,
+        job_details: false,
+        payload_id: 'string',
+        data: base64EncodedAudio,
+      };
+      
+      console.log(jsonMessage);
+
+      if (socket) {
+        socket.send(JSON.stringify(jsonMessage));
+      }
     }
   };
 
   // Function to start recording microphone audio
-  const startRecording = () => {
-    const audioTrack = mediaStream?.getAudioTracks()[0];
+  const startRecording = async () => {
+    if (!mediaRecorder) {
+      await register(await connect());
+
+      const audioTrack = mediaStream?.getAudioTracks()[0];
+        
+      // Create a new MediaStream containing only the audio track
+      const audioOnlyStream = new MediaStream([audioTrack]);
+
+      // Create the MediaRecorder using the audioOnlyStream
+      const recorder = new MediaRecorder(audioOnlyStream, { mimeType: 'audio/wav' });
+
+      recorder.addEventListener('dataavailable', handleAudioDataAvailable);    
+      setMediaRecorder(recorder);
       
-    // Create a new MediaStream containing only the audio track
-    const audioOnlyStream = new MediaStream([audioTrack]);
-
-    // Create the MediaRecorder using the audioOnlyStream
-    const recorder = new MediaRecorder(audioOnlyStream);
-
-  
-    recorder.addEventListener('dataavailable', handleAudioDataAvailable);
-    recorder.start();
-  
-    setMediaRecorder(recorder);
-    setIsRecording(true);
+      recorder.start(3000);
+      setIsRecording(true);
+    } 
+    else {
+      mediaRecorder.start(3000);
+      setIsRecording(true);
+    }
   };  
 
   // Function to stop recording and encode the audio
@@ -59,7 +113,7 @@ const UserVideoPane = () => {
   };
   
   const encodeAudioToBase64 = (audioChunks) => {
-    const blob = new Blob(audioChunks, { type: 'audio/webm' });
+    const blob = new Blob(audioChunks, { type: 'audio/wav' });
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -75,13 +129,35 @@ const UserVideoPane = () => {
     if(encodedAudio) {
       console.log(encodedAudio);
       const decodedWav = Buffer.from(encodedAudio, 'base64');
-      const url = window.URL.createObjectURL(new Blob([decodedWav], { type: 'audio/webm' }));
+      
+      const jsonMessage = {
+        models: {
+          prosody: {}
+        },
+        stream_window_ms: 5000,
+        reset_stream: false,
+        raw_text: false,
+        job_details: false,
+        payload_id: 'string',
+        data: encodedAudio,
+      };
+      
+      console.log(jsonMessage);
+
+      if (socket) {
+        socket.send(JSON.stringify(jsonMessage));
+      }
+
+      const url = window.URL.createObjectURL(new Blob([decodedWav], { type: 'audio/wav' }));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'decoded_audio.webm');
+      link.setAttribute('download', 'decoded_audio.wav');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      setAudioChunks([]);
+      setEncodedAudio(null);
     } else {
       console.log("undefined");
     }
