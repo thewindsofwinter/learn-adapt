@@ -138,3 +138,9 @@
   background: rgba(255, 255, 255, 0.6);
   filter: blur(750px);
 }
+
+h3 {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #E5E4E2;
+}
