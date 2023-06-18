@@ -2,8 +2,6 @@ import axios from 'axios';
 
 export default async function handler(req, res) {
     if (req.method === "POST") {
-        res.status(200).send({"title": "yay"});
-        return
         try {
             const response = await axios.post('https://texttospeech.googleapis.com/v1/text:synthesize',
             {
