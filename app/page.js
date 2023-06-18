@@ -8,7 +8,7 @@ import Interview from "./components/Interview";
 import Teaching from "./components/Teaching";
 import Pitch from "./components/Pitch";
 import Testimony from "./components/Testimony";
-
+import Footer from "./components/Footer";
 
 
 
@@ -35,6 +35,8 @@ export default function Home() {
           <Pitch />
           <Emotion />
           <Testimony />
+          <Footer />
+
         </div>
       </div>
     </div>
