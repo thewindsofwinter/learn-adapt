@@ -70,14 +70,14 @@ const UserVideoPane = ({ taskPrefix, taskSuffix, task }) => {
 
     if (response.ok) {
       const jsonResponse = await response.json();
-      console.log(jsonResponse);
+      // console.log(jsonResponse);
       // Use braces afterwards
       const { transcription } = jsonResponse;
-      console.log("Transcription:", transcription);
+      // console.log("Transcription:", transcription);
       // Do something with the transcription
 
       const concatenatedTranscriptions = transcriptionCaches.slice(lastIndex).join(' ') + transcription;
-      console.log("Cumulative: " + concatenatedTranscriptions);
+      // console.log("Cumulative: " + concatenatedTranscriptions);
 
       let prePrompt = "";
       for(let i = 0; i < AIResponses.length; i++) {
@@ -89,7 +89,7 @@ const UserVideoPane = ({ taskPrefix, taskSuffix, task }) => {
         prePrompt += ", ";
       }
 
-      console.log(prePrompt)
+      // console.log(prePrompt)
 
       const frequencyCounter = speechEmotions.reduce((counter, emotion) => {
         counter[emotion] = (counter[emotion] || 0) + 1;
@@ -107,7 +107,7 @@ const UserVideoPane = ({ taskPrefix, taskSuffix, task }) => {
         }
       }
       
-      console.log(contextEmotion);
+      // console.log(contextEmotion);
 
       const videoFrequencyCounter = videoEmotions.reduce((counter, emotion) => {
         counter[emotion] = (counter[emotion] || 0) + 1;
@@ -125,11 +125,11 @@ const UserVideoPane = ({ taskPrefix, taskSuffix, task }) => {
         }
       }
       
-      console.log(videoContextEmotion);
+      // console.log(videoContextEmotion);
 
       // Define the system prompt and user speech
       const systemPrompt = taskPrefix + task + taskSuffix + prePrompt;
-      console.log(systemPrompt);
+      // console.log(systemPrompt);
       const userSpeech = concatenatedTranscriptions + " Context: The user had " + contextEmotion + " as the highest emotion in their speech and " + videoContextEmotion 
         + " as the highest emotion in their body language during this current response.";
 
@@ -144,7 +144,7 @@ const UserVideoPane = ({ taskPrefix, taskSuffix, task }) => {
       axios.post("/api/ai-response", payload)
         .then(response => {
           const aiResponse = response.data;
-          console.log('AI Response:', aiResponse);
+          // console.log('AI Response:', aiResponse);
           
           setQuestion("GPT: " + aiResponse.assistantReply);
           userInputs.push("User: " + concatenatedTranscriptions);
@@ -339,7 +339,7 @@ const UserVideoPane = ({ taskPrefix, taskSuffix, task }) => {
     
         if (response.ok) {
           const jsonResponse = await response.json();
-          console.log(jsonResponse);
+          // console.log(jsonResponse);
           // Use braces afterwards
           const { transcription } = jsonResponse;
 
@@ -348,7 +348,7 @@ const UserVideoPane = ({ taskPrefix, taskSuffix, task }) => {
 
           // Call the setTranscriptionCaches function to store the transcriptions array in caches
           setTranscriptionCaches(transcriptionCaches);
-          console.log("Transcriptions:", transcriptionCaches);
+          // console.log("Transcriptions:", transcriptionCaches);
         } else {
           console.error("Error:", response.status);
           // Handle the error
@@ -366,14 +366,14 @@ const UserVideoPane = ({ taskPrefix, taskSuffix, task }) => {
       const newSocket = new WebSocket(url);
     
       newSocket.onopen = async () => {
-        console.log('WebSocket connection established');
+        // console.log('WebSocket connection established');
         // Perform any necessary initialization or authentication
 
         recorderRef.current = await AudioRecorder.create();
         
         // Create a closure to capture the current state of `socket`
         (async (socket) => {        
-          console.log(socket)
+          // console.log(socket)
           while (socket) {
             const blob = await recorderRef.current.record(recordingLengthMs);
             // console.log(blob);
@@ -397,7 +397,7 @@ const UserVideoPane = ({ taskPrefix, taskSuffix, task }) => {
       };
     
       newSocket.onclose = () => {
-        console.log('WebSocket connection closed -- attempting re-open');
+        // console.log('WebSocket connection closed -- attempting re-open');
         createWebSocketConnection();
         // Perform any necessary cleanup or reconnection logic
       };
@@ -472,7 +472,7 @@ const UserVideoPane = ({ taskPrefix, taskSuffix, task }) => {
 
         return updatedData;
       });
-      console.log(message["prosody"]);
+      // console.log(message["prosody"]);
     }
   };
       

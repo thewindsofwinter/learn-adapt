@@ -27,7 +27,7 @@ export default function Home() {
             <Link
               href={{
                 pathname: "/practice",
-                state: { task: inputValue} // your data array of objects
+                query: { task: inputValue },
               }}
             >
               Go to Teaching Practice
@@ -37,7 +37,7 @@ export default function Home() {
             <Link
               href={{
                 pathname: "/interview",
-                state: { task: inputValue} // your data array of objects
+                query: { task: inputValue },
               }}
             >
               Go to Interview Preparation
@@ -47,7 +47,7 @@ export default function Home() {
             <Link
               href={{
                 pathname: "/pitch",
-                state: { task: inputValue} // your data array of objects
+                query: { task: inputValue },
               }}
             >
               Go to Practice Pitch
