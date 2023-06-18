@@ -16,7 +16,7 @@ const Teaching = () => {
         </h2>
         <p className={`${styles.paragraph} max-w-[470px] mt-5 pb-4`}>
           There are two different modes: Tutoring Practice and Interview Practice.
-          Interview Insight works by giving a task to the user to answer. The user then answers the prompt, and during the presentation, Hume AI evaluates the users' body language and vocal prosody, which the user can view to improve their presentation skills.
+          Interview Insight works by giving a task to the user to answer. The user then answers the prompt, and during the presentation, Hume AI evaluates the users&apos; body language and vocal prosody, which the user can view to improve their presentation skills.
         </p>
 
         <div className="pb-4">
