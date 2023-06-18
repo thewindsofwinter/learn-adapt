@@ -24,11 +24,9 @@ const UserVideoPane = ({ task }) => {
   const [AIResponses, setAIResponses] = useState([]);
 
   const [speechEmotions, setSpeechEmotions] = useState([]);
+  const [videoEmotions, setVideoEmotions] = useState([]);
   const [speechEmotionTops, setSpeechTops] = useState([]);
   
-  const [videoEmotions, setVideoEmotions] = useState([]);
-  const [videoEmotionTops, setVideoTops] = useState([]);
-
   const recordingLengthMs = 3000;
   
   const [exporting, setExporting] = useState(false);
@@ -111,10 +109,29 @@ const UserVideoPane = ({ task }) => {
       
       console.log(contextEmotion);
 
+      const videoFrequencyCounter = videoEmotions.reduce((counter, emotion) => {
+        counter[emotion] = (counter[emotion] || 0) + 1;
+        return counter;
+      }, {});
+      
+      // Find the most frequent value
+      let videoContextEmotion;
+      let videoMaxFrequency = 0;
+      
+      for (const emotion in videoFrequencyCounter) {
+        if (videoFrequencyCounter[emotion] > videoMaxFrequency) {
+          videoContextEmotion = emotion;
+          videoMaxFrequency = videoFrequencyCounter[emotion];
+        }
+      }
+      
+      console.log(videoContextEmotion);
+
       // Define the system prompt and user speech
       const systemPrompt = "You are a student. A teacher has been tasked with the following: " + task + ". You should ask questions and act confused. Previous conversation: " + prePrompt;
       console.log(systemPrompt);
-      const userSpeech = concatenatedTranscriptions + " Context: The user had " + contextEmotion + " as the highest emotion in their speech during this current response.";
+      const userSpeech = concatenatedTranscriptions + " Context: The user had " + contextEmotion + " as the highest emotion in their speech and " + videoContextEmotion 
+        + " as the highest emotion in their body language during this current response.";
 
       // console.log("Context: The user sounded mostly " + contextEmotion + " during this current response.");
 
@@ -137,9 +154,11 @@ const UserVideoPane = ({ task }) => {
           setUserInputs([...userInputs]);
           setAIResponses([...AIResponses]);
           
-          speechEmotionTops.push("Context: The user had " + contextEmotion + " as the highest emotion in their speech. ");
+          speechEmotionTops.push("Context: The user had " + contextEmotion + " as the highest emotion in their speech and " + videoContextEmotion 
+          + " as the highest emotion in their body language during this current response.");
           setSpeechTops([...speechEmotionTops]);
           setSpeechEmotions([]);
+          setVideoEmotions([]);
         })
         .catch(error => {
           console.error('Error:', error);
@@ -406,7 +425,20 @@ const UserVideoPane = ({ task }) => {
       setEmotionsData((prevData) => {
         // Append the newTimeframe to the existing emotionsData
         const updatedData = [...prevData, message["face"]["predictions"][0]["emotions"]];
-    
+        
+        // Find the emotion with the highest prediction value
+        const topEmotion = message["face"]["predictions"][0]["emotions"].reduce((maxEmotion, emotion) => {
+          if (emotion.score > maxEmotion.score) {
+            return emotion;
+          } else {
+            return maxEmotion;
+          }
+        });
+
+        // Access the name and prediction of the top emotion
+        videoEmotions.push(topEmotion.name);
+        setVideoEmotions([...videoEmotions]);
+
         // Keep only the last ten timeframes
         if (updatedData.length > 10) {
           updatedData.shift(); // Remove the oldest timeframe
