@@ -67,7 +67,6 @@ We used OpenAI's gpt-3.5-turbo-16k to take in timestamped emotions and streamed 
 
 ![InterView InSight](https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/002/511/054/datas/gallery.jpg)
 
-
 ## How to Install and Run the Project
 
 1. Clone the project repository to your local machine.
