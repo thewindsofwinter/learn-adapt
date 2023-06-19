@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 
-
-
 const help = () => {
  
   return (
@@ -15,7 +13,7 @@ const help = () => {
       <p className="mb-8">
         There are two different modes: Tutoring Practice and Interview Practice. Interview Insight works by
         giving a task to the user to answer. The user then answers the prompt, and during the presentation,
-        Hume AI evaluates the users' body language and vocal prosody, which the user can view to improve their
+        Hume AI evaluates the users&apos; body language and vocal prosody, which the user can view to improve their
         presentation skills. The recording starts automatically.
       </p>
       <div className="mb-8 flex flex-col items-center" style={{ margin: '50px' }}>
@@ -28,7 +26,6 @@ const help = () => {
       </div>
     </div>
   </div>
-  
 
   );
 };

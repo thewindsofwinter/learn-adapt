@@ -28,8 +28,8 @@ const InterviewPage = () => {
   const [isComponentLoaded, setIsComponentLoaded] = useState(false);
 
   const taskPrefix = "You are a technical lead in an interview, where the coding question is: ";
-  const taskSuffix = ". You should delve deep into technical details of their solution, and give constraints when asked. Your goal is to evaluate"
-    + " whether hiring them would be beneficial to the company.";
+  const taskSuffix = ". You should ask deep questions into the technical details of the coding question and challenge the interviewee to" + 
+  " produce efficient solutions. Act calm and collected.";
 
   useEffect(() => {
     setIsComponentLoaded(true);
