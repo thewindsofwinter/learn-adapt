@@ -57,7 +57,7 @@ We used OpenAI's gpt-3.5-turbo-16k to take in timestamped emotions and streamed 
 </ul>
 
 ## What's Next For InterView InSight
-### Short Term
+
 <ul>
 <li>Incorporating text to audio (using Google APIs) for Chat GPT's responses to improve user accessibility.</li>
 <li>Keeping a log of practice session responses to refer back to later to improve presentation skills (MongoDB).</li>
