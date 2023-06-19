@@ -80,9 +80,9 @@ We used OpenAI's gpt-3.5-turbo-16k to take in timestamped emotions and streamed 
 
 Andy Tang, Darlnim Park, Mehul Gandhi
 
-*[Andy Tang](https://devpost.com/winterwind2022)
-*[Darlnim Park](https://devpost.com/dpark00)
-*[Mehul Gandhi](https://devpost.com/gandhi854)
+* [Andy Tang](https://devpost.com/winterwind2022)
+* [Darlnim Park](https://devpost.com/dpark00)
+* [Mehul Gandhi](https://devpost.com/gandhi854)
 
 ## Acknowledgments
 
